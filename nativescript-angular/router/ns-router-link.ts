@@ -1,7 +1,8 @@
-import {Directive, HostBinding, HostListener, Input} from '@angular/core';
+import {Directive, HostBinding, HostListener, Input, Optional} from '@angular/core';
 import {LocationStrategy} from '@angular/common';
 import {Router, ActivatedRoute, UrlTree} from '@angular/router';
 import {routerLog} from "../trace";
+import {PageRoute} from "./page-router-outlet";
 
 /**
  * The RouterLink directive lets you link to specific parts of your app.
@@ -35,10 +36,12 @@ export class NSRouterLink {
   @Input() queryParams: { [k: string]: any };
   @Input() fragment: string;
 
-  /**
-   * @internal
-   */
-  constructor(private router: Router, private route: ActivatedRoute) { }
+  private usePageRoute: boolean;
+
+  constructor(private router: Router, private route: ActivatedRoute, @Optional() private pageRoute: PageRoute) {
+    this.usePageRoute = (this.route === this.pageRoute.activatedRoute.getValue());
+    routerLog("NSRouterLink.constructor usePageRoute: " + this.usePageRoute);
+  }
 
   @Input("nsRouterLink")
   set params(data: any[] | string) {
@@ -52,8 +55,10 @@ export class NSRouterLink {
   @HostListener("tap")
   onTap() {
     routerLog("nsRouterLink.tapped: " + this.commands);
+    const currentRoute = this.usePageRoute ? this.pageRoute.activatedRoute.getValue() : this.route;
+
     this.router.navigate(
       this.commands,
-      { relativeTo: this.route, queryParams: this.queryParams, fragment: this.fragment });
+      { relativeTo: currentRoute, queryParams: this.queryParams, fragment: this.fragment });
   }
 }
